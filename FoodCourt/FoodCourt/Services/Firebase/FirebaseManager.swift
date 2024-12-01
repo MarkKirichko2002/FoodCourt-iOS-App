@@ -9,7 +9,7 @@ import FirebaseRemoteConfig
 
 final class FirebaseManager {
     
-    func getConfig(completion: @escaping(String)->Void) {
+    func getConfig(key: String, completion: @escaping(String)->Void) {
         let remoteConfig = RemoteConfig.remoteConfig()
         let settings = RemoteConfigSettings()
         settings.minimumFetchInterval = 0
@@ -18,7 +18,7 @@ final class FirebaseManager {
         remoteConfig.fetch { (status, error) in
             if status == .success {
                 remoteConfig.activate()
-                let fetchedValue = remoteConfig["api_domain"].stringValue
+                let fetchedValue = remoteConfig[key].stringValue
                 completion(fetchedValue)
             }
         }

@@ -51,8 +51,9 @@ struct CookOrderCell: View {
                 Spacer()
                 
                 HStack {
-                    Text(viewModel.convertPreferedTime(order: order.order))
-                        .fontWeight(.bold)
+                    if order.order.preferredTime != nil {
+                        Text(viewModel.convertPreferedTime(order: order.order))
+                    }
                     Spacer()
                     Text("\(viewModel.getSum(by: order.order)) ₽")
                         .fontWeight(.bold)

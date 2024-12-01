@@ -26,7 +26,7 @@ final class SettingsCookViewModel: ObservableObject {
         cook.fcmToken = token
         service.getCook(phone: phone) { cook in
             DispatchQueue.main.async {
-                self.cook = Cook(firstName: cook.firstName, lastName: cook.lastName, fatherName: cook.firstName, fcmToken: phone, phone: cook.phone)
+                self.cook = Cook(firstName: cook.firstName, lastName: cook.lastName, fatherName: cook.fatherName, fcmToken: phone, phone: cook.phone)
             }
         }
     }

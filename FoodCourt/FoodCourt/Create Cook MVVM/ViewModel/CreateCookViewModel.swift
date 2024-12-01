@@ -16,13 +16,19 @@ final class CreateCookViewModel: ObservableObject {
     @Published var isChanged = false
     
     var alertText = ""
+    var password = ""
     
     // MARK: - сервисы
     private let service = APIService()
     private let settingsManager = SettingsManager()
+    private let firebaseManager = FirebaseManager()
+    
+    init() {
+        getPassword()
+    }
     
     func saveCook() {
-        if key == "123" {
+        if key == password {
             if fio.components(separatedBy: " ").count < 3 {
                 alertText = "Введите полное ФИО!"
                 DispatchQueue.main.async {
@@ -53,6 +59,13 @@ final class CreateCookViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.isChanged.toggle()
             }
+        }
+    }
+    
+    func getPassword() {
+        firebaseManager.getConfig(key: "add_cook_key") { password in
+            print("Пароль: \(password)")
+            self.password = password
         }
     }
     

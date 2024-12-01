@@ -12,6 +12,8 @@ final class ClientOrdersListViewModel: ObservableObject {
     var orders = [OrderModel]()
     @Published var sections = [OrderSection]()
     @Published var isLoading = true
+    @Published var isPresented = false
+    @Published var currentOrder = OrderModel(order: Order(id: nil, created: nil, preferredTime: nil, deliveryPoint: nil, products: []), status: Status(statusId: 0), client: nil)
     @Published var selectedSection: String? = nil
     @Published var products = [Product]()
     @Published var isScroll = false
