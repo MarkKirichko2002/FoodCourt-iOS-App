@@ -20,6 +20,10 @@ struct BasketListView: View {
     @State var suggestions = [Suggestion]()
     @State var text = ""
     @State var currentSuggestion = Suggestion(value: "", unrestrictedValue: "", data: [:])
+    @State var isOn = false
+    
+    @State var alertTitle = ""
+    @State var alertMessage = ""
     
     // MARK: - сервисы
     let service = APIService()
@@ -97,27 +101,42 @@ struct BasketListView: View {
                                     self.buttonDisabled = false
                                 } else {
                                     self.buttonDisabled = true
+                                    self.alertTitle = "Время не актуально!"
+                                    self.alertMessage = "Выберите другое время"
                                     self.alert.toggle()
                                 }
                             }
                         }
                         
                         Section() {
-                            TextField("", text: $text, prompt: Text("Введите ваш адрес"))
-                                .onChange(of: text) { oldValue, newValue in
-                                    self.locationService.getSuggestions(text: newValue) { suggestions in
-                                        DispatchQueue.main.async {
-                                            self.suggestions = suggestions
+                            HStack {
+                                Text("Доставка")
+                                    .fontWeight(.bold)
+                                Spacer()
+                                Toggle(isOn: $isOn) {
+                                    
+                                }.tint(.green)
+                            }
+                        }
+                        
+                        if isOn {
+                            Section() {
+                                TextField("", text: $text, prompt: Text("Введите ваш адрес"))
+                                    .onChange(of: text) { oldValue, newValue in
+                                        self.locationService.getSuggestions(text: newValue) { suggestions in
+                                            DispatchQueue.main.async {
+                                                self.suggestions = suggestions
+                                            }
                                         }
                                     }
+                                List(suggestions, id: \.value) { suggestion in
+                                    Text(convert(data: suggestion.data))
+                                        .onTapGesture {
+                                            text = convert(data: suggestion.data)
+                                            currentSuggestion = suggestion
+                                            suggestions = []
+                                        }
                                 }
-                            List(suggestions, id: \.value) { suggestion in
-                                Text(convert(data: suggestion.data))
-                                    .onTapGesture {
-                                        text = convert(data: suggestion.data)
-                                        currentSuggestion = suggestion
-                                        suggestions = []
-                                 }
                             }
                         }
                         
@@ -127,7 +146,7 @@ struct BasketListView: View {
                                     .fontWeight(.bold)
                                 Spacer()
                                 Button(action: {
-                                    makeOrder()
+                                    handleOrder()
                                 }) {
                                     Text("Заказать")
                                         .fontWeight(.bold)
@@ -151,14 +170,14 @@ struct BasketListView: View {
                 }
             }
             .navigationTitle("Корзина")
-            .alert("Время не актуально", isPresented: $alert) {
+            .alert(alertTitle, isPresented: $alert) {
                 Button(action: {
                     
                 }) {
                     Text("ОК")
                 }
             } message: {
-                Text("Выберите другое время")
+                Text(alertMessage)
             }
             .onAppear {
                 service.getWorkingCooks { isWorking in
@@ -200,7 +219,7 @@ struct BasketListView: View {
                 self.menuList.products.removeAll()
                 self.menuList.tags.removeAll()
                 NotificationCenter.default.post(name: Notification.Name("index"), object: 2)
-                NotificationCenter.default.post(name: Notification.Name("order created"), object: nil)
+                NotificationCenter.default.post(name: Notification.Name("order changed"), object: nil)
             }
         }
     }
@@ -218,7 +237,25 @@ struct BasketListView: View {
             sum = sum + (product.key.price * product.value)
         }
         
+        if isOn {
+            sum += menuList.deliveryPrice
+        }
+        
         return sum
+    }
+    
+    func handleOrder() {
+        if isOn {
+            if currentSuggestion.value.isEmpty {
+                self.alertTitle = "Неверный адрес!"
+                self.alertMessage = "введите адрес доставки"
+                self.alert.toggle()
+            } else {
+                makeOrder()
+            }
+        } else {
+            makeOrder()
+        }
     }
     
     func convert(data: [String: String?])-> String {

@@ -17,20 +17,32 @@ final class CookOrdersListViewModel: ObservableObject {
     @Published var currentStatus = StatusModel(statusId: 0, statusName: "")
     @Published var statuses = [StatusModel]()
     @Published var isScroll = false
+    @Published var isWorking = UserDefaults.loadData(type: WorkingStatus.self, key: "isWorking") ?? .notwork
     
     // MARK: - сервисы
     private let service = APIService()
     private let dateManager = DateManager()
     private let locationManager = LocationManager()
+    private let settingsManager = SettingsManager()
+    
+    private var deliveryPrice = 0
     
     init() {
         getOrders()
         observeOrder()
     }
     
+    func editWorking(status: WorkingStatus) {
+        service.editCookWorking(isWorking: status.value) { _ in
+            UserDefaults.saveData(object: status, key: "isWorking") {}
+        }
+    }
+    
     func getOrders() {
-        sections = []
-        isLoading = true
+        DispatchQueue.main.async {
+            self.sections = []
+            self.isLoading = true
+        }
         service.getOrders { orders in
             DispatchQueue.main.async {
                 self.orders = orders
@@ -81,6 +93,10 @@ final class CookOrdersListViewModel: ObservableObject {
         }
     }
     
+    func getDeliveryPrice() {
+        deliveryPrice = settingsManager.getDeliveryPrice()
+    }
+    
     func getSum(by order: Order)-> Int {
         
         var sum = 0
@@ -88,6 +104,10 @@ final class CookOrdersListViewModel: ObservableObject {
         for product in order.products ?? [] {
             let prod = getProduct(by: product.productID)
             sum = sum + (prod.price * product.count)
+        }
+        
+        if order.deliveryPoint != nil {
+            sum += deliveryPrice
         }
         
         return sum
@@ -126,6 +146,14 @@ final class CookOrdersListViewModel: ObservableObject {
         }
     }
     
+    func convertPrice(order: OrderModel)-> String {
+        if order.order.deliveryPoint != nil {
+            return "\(getSum(by: order.order)) ₽ (c доставкой)"
+        } else {
+            return "\(getSum(by: order.order)) ₽"
+        }
+    }
+    
     func getLocationAddress(order: Order, completion: @escaping(String)->Void) {
         if let location = order.deliveryPoint {
             locationManager.getAddress(latitude: location.lat ?? 0, longtitude: location.lon ?? 0) { address, error in
@@ -143,7 +171,7 @@ final class CookOrdersListViewModel: ObservableObject {
     }
     
     func observeOrder() {
-        NotificationCenter.default.addObserver(forName: Notification.Name("order created"), object: nil, queue: nil) { _ in
+        NotificationCenter.default.addObserver(forName: Notification.Name("order added"), object: nil, queue: nil) { _ in
             self.getOrders()
         }
     }

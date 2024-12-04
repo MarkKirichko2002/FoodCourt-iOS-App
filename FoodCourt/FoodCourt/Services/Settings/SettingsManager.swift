@@ -9,6 +9,10 @@ import Foundation
 
 final class SettingsManager {
     
+    func getDeliveryPrice()-> Int {
+        return UserDefaults.standard.object(forKey: "deliveryPrice") as? Int ?? 150
+    }
+    
     func getPhone()-> String {
         return UserDefaults.standard.object(forKey: "phone") as? String ?? ""
     }

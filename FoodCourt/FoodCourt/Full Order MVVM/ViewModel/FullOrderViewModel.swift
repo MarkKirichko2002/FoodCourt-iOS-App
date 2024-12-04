@@ -14,12 +14,16 @@ final class FullOrderViewModel: ObservableObject {
     @Published var statuses = [StatusModel]()
     @Published var address = ""
     
+    private var deliveryPrice = 0
+    
     // MARK: - сервисы
     private let service = APIService()
     private let locationManager = LocationManager()
+    private let settingsManager = SettingsManager()
     
     init() {
         getProducts()
+        getDeliveryPrice()
     }
     
     func getProducts() {
@@ -62,6 +66,10 @@ final class FullOrderViewModel: ObservableObject {
         }
     }
     
+    func getDeliveryPrice() {
+        deliveryPrice = settingsManager.getDeliveryPrice()
+    }
+    
     func getSum(by order: Order)-> Int {
         
         var sum = 0
@@ -69,6 +77,10 @@ final class FullOrderViewModel: ObservableObject {
         for product in order.products ?? [] {
             let prod = getProduct(by: product.productID)
             sum = sum + (prod.price * product.count)
+        }
+        
+        if order.deliveryPoint != nil {
+            sum += deliveryPrice
         }
         
         return sum
@@ -86,7 +98,15 @@ final class FullOrderViewModel: ObservableObject {
         if let time = order.preferredTime {
             return "Приготовить к: \(time)"
         } else {
-            return order.created ?? ""
+            return ""
+        }
+    }
+    
+    func convertPrice(order: OrderModel)-> String {
+        if order.order.deliveryPoint != nil {
+            return "Итого: \(getSum(by: order.order)) ₽ (c доставкой)"
+        } else {
+            return "Итого: \(getSum(by: order.order)) ₽"
         }
     }
     

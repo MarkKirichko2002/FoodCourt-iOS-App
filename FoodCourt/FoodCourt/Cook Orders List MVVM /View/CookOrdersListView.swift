@@ -67,6 +67,17 @@ struct CookOrdersListView: View {
                 }
             }.navigationTitle("Заказы")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Picker("", selection: $viewModel.isWorking) {
+                            ForEach(WorkingStatus.allCases, id: \.self) { status in
+                                Text(status.title)
+                            }
+                        }.onChange(of: viewModel.isWorking) { oldValue, newValue in
+                            viewModel.editWorking(status: newValue)
+                        }
+                    }
+              }
         }
     }
 }

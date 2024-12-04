@@ -11,12 +11,15 @@ import SDWebImageSwiftUI
 class MenuList: ObservableObject {
     @Published var products: [Product : Int] = [:]
     @Published var tags = [Int]()
+    @Published var deliveryPrice: Int = 0
 }
 
 struct MenuListView: View {
     
     @EnvironmentObject var menuList: MenuList
     @ObservedObject var viewModel = MenuListViewModel()
+    
+    @State private var scrollPosition: CGFloat = 0.0
     
     var body: some View {
         NavigationView {
@@ -148,14 +151,11 @@ struct MenuListView: View {
                                 scrollView.scrollTo(viewModel.selectedCategory, anchor: .top)
                             }
                         }
-                        .onChange(of: viewModel.isChanged) {
-                            viewModel.getMenu()
-                        }
                     }
                     
                     if !viewModel.getIsCook() {
                         HStack {
-                            Text("Доставка стоит 150 ₽")
+                            Text("Доставка стоит \(menuList.deliveryPrice) ₽")
                             Spacer()
                             HStack(spacing: 10) {
                                 Image("basket")
@@ -177,6 +177,9 @@ struct MenuListView: View {
                 NavigationView {
                     AddProductView(isChanged: $viewModel.isChanged, product: viewModel.currentProduct)
                 }
+            }
+            .onChange(of: viewModel.isChanged) {
+                viewModel.getMenu()
             }
         }
     }

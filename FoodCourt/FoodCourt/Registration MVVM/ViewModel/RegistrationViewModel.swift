@@ -5,7 +5,7 @@
 //  Created by Марк Киричко on 21.11.2024.
 //
 
-import Foundation
+import FirebaseMessaging
 
 final class RegistrationViewModel: ObservableObject {
     
@@ -37,14 +37,17 @@ final class RegistrationViewModel: ObservableObject {
     
     func addUser() {
         let isCook = settingsManager.getIsCook()
-        let fcm = FcmModel(fcm: settingsManager.getToken())
-        client.fcmToken = settingsManager.getToken()
-        client.phone = String(client.phone.dropFirst())
-        service.addUser(client: client) { model in
-            self.service.updateToken(isCook: isCook, fcm: fcm, id: model.id ?? 0) {}
-            self.saveData(client: model)
-            DispatchQueue.main.async {
-                self.isAuth = true
+        if let fcmToken = Messaging.messaging().fcmToken {
+            print("TOKEEEN: \(fcmToken)")
+            let fcm = FcmModel(fcm: fcmToken)
+            client.fcmToken = fcmToken
+            client.phone = String(client.phone.dropFirst())
+            service.addUser(client: client) { model in
+                self.service.updateToken(isCook: isCook, fcm: fcm, id: model.id ?? 0) {}
+                self.saveData(client: model)
+                DispatchQueue.main.async {
+                    self.isAuth = true
+                }
             }
         }
     }

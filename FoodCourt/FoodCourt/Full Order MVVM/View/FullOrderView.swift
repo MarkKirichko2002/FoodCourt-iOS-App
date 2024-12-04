@@ -45,7 +45,7 @@ struct FullOrderView: View {
                         }
                         Text(viewModel.getStatus(by: order.status.statusId).statusName)
                             .fontWeight(.bold)
-                        Text("Итого: \(viewModel.getSum(by: order.order)) ₽")
+                        Text(viewModel.convertPrice(order: order))
                             .fontWeight(.bold)
                     } .padding(15)
                     

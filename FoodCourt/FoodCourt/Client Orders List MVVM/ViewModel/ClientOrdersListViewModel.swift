@@ -19,14 +19,17 @@ final class ClientOrdersListViewModel: ObservableObject {
     @Published var isScroll = false
     
     private var statuses = [StatusModel]()
+    private var deliveryPrice = 0
     
     // MARK: - сервисы
     private let service = APIService()
     private let dateManager = DateManager()
+    private let settingsManager = SettingsManager()
     
     init() {
         getOrders()
         observeOrder()
+        getDeliveryPrice()
     }
     
     func getOrders() {
@@ -81,13 +84,21 @@ final class ClientOrdersListViewModel: ObservableObject {
         }
     }
     
+    func getDeliveryPrice() {
+        deliveryPrice = settingsManager.getDeliveryPrice()
+    }
+    
     func getSum(by order: Order)-> Int {
         
         var sum = 0
-        
+    
         for product in order.products ?? [] {
             let prod = getProduct(by: product.productID)
             sum = sum + (prod.price * product.count)
+        }
+        
+        if order.deliveryPoint != nil {
+            sum += deliveryPrice
         }
         
         return sum
@@ -110,8 +121,16 @@ final class ClientOrdersListViewModel: ObservableObject {
         return order.preferredTime ?? ""
     }
     
+    func convertPrice(order: OrderModel)-> String {
+        if order.order.deliveryPoint != nil {
+            return "\(getSum(by: order.order)) ₽ (c доставкой)"
+        } else {
+            return "\(getSum(by: order.order)) ₽"
+        }
+    }
+    
     func observeOrder() {
-        NotificationCenter.default.addObserver(forName: Notification.Name("order created"), object: nil, queue: nil) { _ in
+        NotificationCenter.default.addObserver(forName: Notification.Name("order changed"), object: nil, queue: nil) { _ in
             self.getOrders()
         }
     }

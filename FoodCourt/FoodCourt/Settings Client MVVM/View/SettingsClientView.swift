@@ -37,7 +37,8 @@ struct SettingsClientView: View {
                     }
                 }
             }.navigationTitle("Настройки")
-        }.onChange(of: viewModel.client.phone) {
+        }
+        .onChange(of: viewModel.client.phone) {
             viewModel.client.phone = viewModel.convertText()
         }
         .fullScreenCover(isPresented: $viewModel.isPresented) {

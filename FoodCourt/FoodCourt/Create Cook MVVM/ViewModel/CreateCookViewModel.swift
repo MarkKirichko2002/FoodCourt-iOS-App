@@ -5,7 +5,7 @@
 //  Created by Марк Киричко on 16.11.2024.
 //
 
-import Foundation
+import Firebase
 
 final class CreateCookViewModel: ObservableObject {
     
@@ -51,21 +51,24 @@ final class CreateCookViewModel: ObservableObject {
     }
     
     func addCook() {
-        let token = settingsManager.getToken()
         let correctNumber = String(phone.dropFirst())
-        let cook = Cook(firstName: fio.components(separatedBy: " ")[1], lastName: fio.components(separatedBy: " ")[0], fatherName: fio.components(separatedBy: " ")[2], fcmToken: token, phone: correctNumber)
-        service.createCook(cook: cook) { model in
-            self.saveData(cook: model)
-            DispatchQueue.main.async {
-                self.isChanged.toggle()
+        if let fcmToken = Messaging.messaging().fcmToken {
+            print("TOKEEEN: \(fcmToken)")
+            let cook = Cook(firstName: fio.components(separatedBy: " ")[1], lastName: fio.components(separatedBy: " ")[0], fatherName: fio.components(separatedBy: " ")[2], fcmToken: fcmToken, phone: correctNumber)
+            service.createCook(cook: cook) { model in
+                self.saveData(cook: model)
+                DispatchQueue.main.async {
+                    self.isChanged.toggle()
+                }
             }
         }
     }
     
     func getPassword() {
         firebaseManager.getConfig(key: "add_cook_key") { password in
-            print("Пароль: \(password)")
-            self.password = password
+            DispatchQueue.main.async {
+                self.password = String(password as? Int ?? 0)
+            }
         }
     }
     

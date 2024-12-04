@@ -36,7 +36,7 @@ struct ClientOrderCell: View {
             VStack(alignment: .trailing, spacing: 15) {
                 Text(viewModel.getStatus(by: order.status.statusId))
                     .fontWeight(.bold)
-                Text("\(viewModel.getSum(by: order.order)) ₽")
+                Text(viewModel.convertPrice(order: order))
                     .fontWeight(.bold)
             }
         }

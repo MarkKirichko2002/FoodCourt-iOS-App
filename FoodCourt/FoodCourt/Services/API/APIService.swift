@@ -9,7 +9,15 @@ import Foundation
 
 final class APIService {
     
+    private let firebaseManager = FirebaseManager()
     let token = UserDefaults.standard.object(forKey: "token") as? String ?? ""
+    var domain = ""
+    
+    init() {
+        firebaseManager.getConfig(key: "domain") { domain in
+            self.domain = domain as? String ?? ""
+        }
+    }
     
     func getMenu(completion: @escaping([Category])->Void) {
         URLSession.shared.dataTask(with: URL(string: "https://merqury.ddns.net/menu/get")!) { data, error, _ in
@@ -380,6 +388,29 @@ final class APIService {
                         print("Ответ сервера: \(responseString)")
                     }
                 }
+            }
+        }.resume()
+    }
+    
+    func editCookWorking(isWorking: Int, completion: @escaping(String)->Void) {
+        
+        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/cooks/toggle?working=\(isWorking)")!)
+        
+        request.httpMethod = "PATCH"
+        request.setValue(token, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Ошибка при выполнении запроса: \(error)")
+                return
+            }
+            
+            if let isWorking = String(data: data ?? Data(), encoding: .utf8) {
+                print("Работает: \(isWorking)")
+                completion(isWorking)
+            } else {
+                print("Не удалось преобразовать данные в строку.")
             }
         }.resume()
     }
