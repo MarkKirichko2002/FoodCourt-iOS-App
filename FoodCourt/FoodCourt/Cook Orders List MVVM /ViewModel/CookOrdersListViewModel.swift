@@ -79,7 +79,7 @@ final class CookOrdersListViewModel: ObservableObject {
                 return status
             }
         }
-        return  StatusModel(statusId: 1, statusName: "Новый")
+        return StatusModel(statusId: 1, statusName: "Новый")
     }
     
     func getStatuses() {

@@ -12,12 +12,10 @@ struct CreateCookView: View {
     @ObservedObject var viewModel = CreateCookViewModel()
     @Environment(\.dismiss) var dismiss
     
-    let cookTabView = CookTabView()
-    
     var body: some View {
         VStack {
             if viewModel.isChanged {
-                cookTabView
+                CookTabView()
             } else {
                 VStack {
                     Form {

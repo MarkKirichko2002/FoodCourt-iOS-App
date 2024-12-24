@@ -55,10 +55,18 @@ final class CreateCookViewModel: ObservableObject {
         if let fcmToken = Messaging.messaging().fcmToken {
             print("TOKEEEN: \(fcmToken)")
             let cook = Cook(firstName: fio.components(separatedBy: " ")[1], lastName: fio.components(separatedBy: " ")[0], fatherName: fio.components(separatedBy: " ")[2], fcmToken: fcmToken, phone: correctNumber)
+            let fcm = FcmModel(fcm: fcmToken)
             service.createCook(cook: cook) { model in
-                self.saveData(cook: model)
-                DispatchQueue.main.async {
-                    self.isChanged.toggle()
+                UserDefaults.standard.set(fcmToken, forKey: "token")
+                self.service.updateToken(isCook: true, fcm: fcm, id: model.id) {
+                    self.service.editCookWorking(isWorking: 1) { _ in
+                        self.saveData(cook: model)
+                        UserDefaults.saveData(object: WorkingStatus.work, key: "isWorking") {
+                            DispatchQueue.main.async {
+                                self.isChanged.toggle()
+                            }
+                        }
+                    }
                 }
             }
         }
