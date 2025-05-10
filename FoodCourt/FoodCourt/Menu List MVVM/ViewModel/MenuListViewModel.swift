@@ -20,6 +20,7 @@ final class MenuListViewModel: ObservableObject {
     // MARK: - сервисы
     private let apiService = APIService()
     private let settingsManager = SettingsManager()
+    private let fireBaseManager = FirebaseManager()
     
     init() {
         getMenu()

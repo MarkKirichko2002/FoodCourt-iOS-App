@@ -35,7 +35,7 @@ struct CookOrderCell: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: 50, height: 50)
-                            Text("\(product.count) * \(viewModel.getProduct(by: product.productID).name) (\(viewModel.getProduct(by: product.productID).price)) = \(viewModel.getSum(price: viewModel.getProduct(by: product.productID).price, count: product.count)) ₽")
+                            Text("\(product.count) * \(viewModel.getProduct(by: product.productID).name) (\(viewModel.getProduct(by: product.productID).price)) = \(viewModel.convertPrice(order: order))")
                                 .fontWeight(.bold)
                         }
                     }
@@ -51,8 +51,9 @@ struct CookOrderCell: View {
                 Spacer()
                 
                 HStack {
-                    Text(viewModel.convertPreferedTime(order: order.order))
-                        .fontWeight(.bold)
+                    if order.order.preferredTime != nil {
+                        Text(viewModel.convertPreferedTime(order: order.order))
+                    }
                     Spacer()
                     Text("\(viewModel.getSum(by: order.order)) ₽")
                         .fontWeight(.bold)

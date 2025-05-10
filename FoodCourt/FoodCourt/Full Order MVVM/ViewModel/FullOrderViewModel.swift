@@ -1,46 +1,29 @@
 //
-//  ClientOrdersListViewModel.swift
+//  FullOrderViewModel.swift
 //  FoodCourt
 //
-//  Created by Марк Киричко on 03.11.2024.
+//  Created by Марк Киричко on 01.12.2024.
 //
 
 import Foundation
 
-final class ClientOrdersListViewModel: ObservableObject {
+final class FullOrderViewModel: ObservableObject {
     
-    var orders = [OrderModel]()
-    @Published var sections = [OrderSection]()
     @Published var isLoading = true
-    @Published var isPresented = false
-    @Published var currentOrder = OrderModel(order: Order(id: nil, created: nil, preferredTime: nil, deliveryPoint: nil, products: []), status: Status(statusId: 0), client: nil)
-    @Published var selectedSection: String? = nil
     @Published var products = [Product]()
-    @Published var isScroll = false
+    @Published var statuses = [StatusModel]()
+    @Published var address = ""
     
-    private var statuses = [StatusModel]()
     private var deliveryPrice = 0
     
     // MARK: - сервисы
     private let service = APIService()
-    private let dateManager = DateManager()
+    private let locationManager = LocationManager()
     private let settingsManager = SettingsManager()
     
     init() {
-        getOrders()
-        observeOrder()
+        getProducts()
         getDeliveryPrice()
-    }
-    
-    func getOrders() {
-        sections = []
-        isLoading = true
-        service.getOrders { orders in
-            DispatchQueue.main.async {
-                self.orders = orders
-                self.getProducts()
-            }
-        }
     }
     
     func getProducts() {
@@ -65,20 +48,19 @@ final class ClientOrdersListViewModel: ObservableObject {
         return products[0]
     }
     
-    func getStatus(by id: Int)-> String {
+    func getStatus(by id: Int)-> StatusModel {
         for status in statuses {
             if status.statusId == id {
-                return status.statusName
+                return status
             }
         }
-        return ""
+        return  StatusModel(statusId: 1, statusName: "Новый")
     }
     
     func getStatuses() {
         service.getStatuses { statuses in
             DispatchQueue.main.async {
                 self.statuses = statuses
-                self.createSections()
                 self.isLoading = false
             }
         }
@@ -91,7 +73,7 @@ final class ClientOrdersListViewModel: ObservableObject {
     func getSum(by order: Order)-> Int {
         
         var sum = 0
-    
+        
         for product in order.products ?? [] {
             let prod = getProduct(by: product.productID)
             sum = sum + (prod.price * product.count)
@@ -104,34 +86,37 @@ final class ClientOrdersListViewModel: ObservableObject {
         return sum
     }
     
-    func createSections() {
-        for status in statuses {
-            let filteredOrders = orders.filter({ $0.status.statusId == status.statusId })
-            if !filteredOrders.isEmpty {
-                let model = OrderSection(name: status.statusName, orders: filteredOrders)
-                sections.append(model)
-            }
-        }
-        if !sections.isEmpty {
-            selectedSection = sections[0].name
-        }
+    func getSum(price: Int, count: Int)-> Int {
+        return price * count
     }
     
     func convertDate(order: Order)-> String {
         return order.preferredTime ?? ""
     }
     
-    func convertPrice(order: OrderModel)-> String {
-        if order.order.deliveryPoint != nil {
-            return "\(getSum(by: order.order)) ₽ (c доставкой)"
+    func convertPreferedTime(order: Order)-> String {
+        if let time = order.preferredTime {
+            return "Приготовить к: \(time)"
         } else {
-            return "\(getSum(by: order.order)) ₽"
+            return ""
         }
     }
     
-    func observeOrder() {
-        NotificationCenter.default.addObserver(forName: Notification.Name("order changed"), object: nil, queue: nil) { _ in
-            self.getOrders()
+    func convertPrice(order: OrderModel)-> String {
+        if order.order.deliveryPoint != nil {
+            return "Итого: \(getSum(by: order.order)) ₽ (c доставкой)"
+        } else {
+            return "Итого: \(getSum(by: order.order)) ₽"
+        }
+    }
+    
+    func getLocationAddress(order: Order) {
+        if let location = order.deliveryPoint {
+            locationManager.getAddress(latitude: location.lat ?? 0, longtitude: location.lon ?? 0) { address, error in
+                self.address = "Адрес доставки: \(address ?? "")"
+            }
+        } else {
+            address = "Самовывоз"
         }
     }
 }

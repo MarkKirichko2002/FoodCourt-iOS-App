@@ -9,10 +9,18 @@ import Foundation
 
 final class APIService {
     
+    private let firebaseManager = FirebaseManager()
     let token = UserDefaults.standard.object(forKey: "token") as? String ?? ""
+    var domain = ""
+    
+    init() {
+        firebaseManager.getConfig(key: "domain") { domain in
+            self.domain = domain as? String ?? ""
+        }
+    }
     
     func getMenu(completion: @escaping([Category])->Void) {
-        URLSession.shared.dataTask(with: URL(string: "https://merqury.ddns.net/menu/get")!) { data, error, _ in
+        URLSession.shared.dataTask(with: URL(string: "http://merqury.ddns.net:9090/menu/get")!) { data, error, _ in
             guard let data = data else {return}
             
             do {
@@ -25,7 +33,7 @@ final class APIService {
     }
     
     func getCategories(completion: @escaping([CategoryModel])->Void) {
-        URLSession.shared.dataTask(with: URL(string: "https://merqury.ddns.net/categories/get")!) { data, error, _ in
+        URLSession.shared.dataTask(with: URL(string: "http://merqury.ddns.net:9090/categories/get")!) { data, error, _ in
             guard let data = data else {return}
             
             do {
@@ -38,7 +46,7 @@ final class APIService {
     }
     
     func createProduct(categoryID: Int, product: Product, completion: @escaping()->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/menu/add?categoryId=\(categoryID)")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/menu/add?categoryId=\(categoryID)")!)
         let json = createJson(data: product)
         print(json)
         request.httpMethod = "POST"
@@ -73,7 +81,7 @@ final class APIService {
     }
     
     func editProduct(categoryID: Int, product: Product, completion: @escaping()->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/menu/patch?categoryId=\(categoryID)")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/menu/patch?categoryId=\(categoryID)")!)
         let json = createJson(data: product)
         print(json)
         request.httpMethod = "PATCH"
@@ -108,7 +116,7 @@ final class APIService {
     }
     
     func deleteProduct(productID: Int, completion: @escaping()->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/menu/delete?id=\(productID)")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/menu/delete?id=\(productID)")!)
         request.httpMethod = "DELETE"
         request.setValue(token, forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -135,7 +143,7 @@ final class APIService {
     func createOrder(location: DeliveryPoint?, time: String?, products: [Product : Int], completion: @escaping()->Void) {
         let prods = products.map { ProductsOrder(count: $0.value, productID: $0.key.id)}
         let order = Order(id: nil, created: nil, preferredTime: time, deliveryPoint: location, products: prods)
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/orders/add")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/orders/add")!)
         let json = createJson(data: order)
         print(json)
         request.httpMethod = "POST"
@@ -170,7 +178,7 @@ final class APIService {
     }
     
     func getOrders(completion: @escaping([OrderModel])->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/orders/get")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/orders/get")!)
         
         request.httpMethod = "GET"
         request.setValue(token, forHTTPHeaderField: "Authorization")
@@ -195,7 +203,7 @@ final class APIService {
     }
     
     func editOrder(statusId: Int, orderId: Int, completion: @escaping()->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/orders/patch?statusId=\(statusId)&orderId=\(orderId)")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/orders/patch?statusId=\(statusId)&orderId=\(orderId)")!)
         
         request.httpMethod = "PATCH"
         request.setValue(token, forHTTPHeaderField: "Authorization")
@@ -209,7 +217,7 @@ final class APIService {
     
     func getWorkingCooks(completion: @escaping(String)->Void) {
         
-        URLSession.shared.dataTask(with: URL(string: "https://merqury.ddns.net/cooks/working")!) { data, error, _ in
+        URLSession.shared.dataTask(with: URL(string: "http://merqury.ddns.net:9090/cooks/working")!) { data, error, _ in
             guard let data = data else {return}
             
             if let isWorking = String(data: data, encoding: .utf8) {
@@ -223,7 +231,7 @@ final class APIService {
     }
     
     func getStatuses(completion: @escaping([StatusModel])->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/statuses/get")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/statuses/get")!)
         
         request.httpMethod = "GET"
         request.setValue(token, forHTTPHeaderField: "Authorization")
@@ -257,7 +265,7 @@ final class APIService {
     }
     
     func addUser(client: Client, completion: @escaping(ClientModel)->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/clients/add")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/clients/add")!)
         let json = createJson(data: client)
         
         request.httpMethod = "POST"
@@ -294,7 +302,7 @@ final class APIService {
     }
     
     func changeUser(client: Client, completion: @escaping()->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/clients/patch")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/clients/patch")!)
         let json = createJson(data: client)
         
         request.httpMethod = "PATCH"
@@ -326,7 +334,7 @@ final class APIService {
     
     func getClient(phone: String, completion: @escaping(ClientModel)->Void) {
         print("phone: \(phone)")
-        URLSession.shared.dataTask(with: URL(string: "https://merqury.ddns.net/clients/get?phone=\(phone)")!) { data, error, _ in
+        URLSession.shared.dataTask(with: URL(string: "http://merqury.ddns.net:9090/clients/get?phone=\(phone)")!) { data, error, _ in
             guard let data = data else {return}
             
             if let jsonString = String(data: data, encoding: .utf8) {
@@ -345,7 +353,7 @@ final class APIService {
     }
     
     func createCook(cook: Cook, completion: @escaping(CookModel)->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/cooks/add")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/cooks/add")!)
         let json = createJson(data: cook)
         print(json)
         request.httpMethod = "POST"
@@ -384,9 +392,32 @@ final class APIService {
         }.resume()
     }
     
+    func editCookWorking(isWorking: Int, completion: @escaping(String)->Void) {
+        
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/cooks/toggle?working=\(isWorking)")!)
+        
+        request.httpMethod = "PATCH"
+        request.setValue(token, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("Ошибка при выполнении запроса: \(error)")
+                return
+            }
+            
+            if let isWorking = String(data: data ?? Data(), encoding: .utf8) {
+                print("Работает: \(isWorking)")
+                completion(isWorking)
+            } else {
+                print("Не удалось преобразовать данные в строку.")
+            }
+        }.resume()
+    }
+    
     func deleteCook(completion: @escaping()->Void) {
         let id = UserDefaults.standard.object(forKey: "id") as? Int ?? 0
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/cooks/delete?id=\(id)")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/cooks/delete?id=\(id)")!)
         request.httpMethod = "DELETE"
         request.setValue(token, forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -412,7 +443,7 @@ final class APIService {
     }
     
     func getCook(phone: String, completion: @escaping(CookItem)->Void) {
-        URLSession.shared.dataTask(with: URL(string: "https://merqury.ddns.net/cooks/get?phone=\(phone)")!) { data, error, _ in
+        URLSession.shared.dataTask(with: URL(string: "http://merqury.ddns.net:9090/cooks/get?phone=\(phone)")!) { data, error, _ in
             guard let data = data else {return}
             
             do {
@@ -425,7 +456,7 @@ final class APIService {
     }
     
     func changeCook(cook: CookModel, completion: @escaping()->Void) {
-        var request = URLRequest(url: URL(string: "https://merqury.ddns.net/cooks/patch")!)
+        var request = URLRequest(url: URL(string: "http://merqury.ddns.net:9090/cooks/patch")!)
         let json = createJson(data: cook)
         request.httpMethod = "PATCH"
         request.setValue(token, forHTTPHeaderField: "Authorization")
@@ -457,9 +488,9 @@ final class APIService {
     func updateToken(isCook: Bool, fcm: FcmModel, id: Int, completion: @escaping()->Void) {
         var url = ""
         if isCook {
-            url = "https://merqury.ddns.net/cooks/updateFcm?id=\(id)"
+            url = "http://merqury.ddns.net:9090/cooks/updateFcm?id=\(id)"
         } else {
-            url = "https://merqury.ddns.net/clients/updateFcm?id=\(id)"
+            url = "http://merqury.ddns.net:9090/clients/updateFcm?id=\(id)"
         }
         var request = URLRequest(url: URL(string: url)!)
         let json = createJson(data: fcm)

@@ -17,6 +17,9 @@ struct ClientTabView: View {
     let ordersListView = ClientOrdersListView()
     let profileView = ProfileView()
     
+    // MARK: - сервисы
+    private let fireBaseManager = FirebaseManager()
+    
     var body: some View {
         TabView(selection: $selectedTab) {
             menuListView
@@ -44,6 +47,7 @@ struct ClientTabView: View {
         }.tint(Color(UIColor.label))
         .onAppear {
             observeIndex()
+            getDeliveryPrice()
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             UserDefaults.standard.set(newValue, forKey: "index")
@@ -55,6 +59,15 @@ struct ClientTabView: View {
             if let index = notification.object as? Int {
                 selectedTab = index
                 UserDefaults.standard.set(index, forKey: "index")
+            }
+        }
+    }
+    
+    func getDeliveryPrice() {
+        fireBaseManager.getConfig(key: "delivery_price") { price in
+            print("Тип: \(type(of: price))")
+            DispatchQueue.main.async {
+                self.menuList.deliveryPrice = price as? Int ?? 228
             }
         }
     }

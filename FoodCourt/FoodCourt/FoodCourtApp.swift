@@ -41,6 +41,26 @@ class AppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNot
         print("Firebase registration token: \(String(describing: fcmToken!))")
     }
     
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                  willPresent notification: UNNotification) async
+        -> UNNotificationPresentationOptions {
+        let userInfo = notification.request.content.userInfo
+
+        Messaging.messaging().appDidReceiveMessage(userInfo)
+        handleMessages(data: userInfo)
+        return [[.alert, .sound]]
+    }
+    
+    func handleMessages(data: [AnyHashable: Any]) {
+        if data["order"] != nil {
+            print("yes")
+            NotificationCenter.default.post(name: Notification.Name("order added"), object: nil)
+        } else if data["data"] != nil {
+            print("yes")
+            NotificationCenter.default.post(name: Notification.Name("order changed"), object: nil)
+        }
+    }
+    
     func checkToken(token: String) {
         let savedID = UserDefaults.standard.object(forKey: "id") as? Int ?? 0
         let isCook = UserDefaults.standard.object(forKey: "isCook") as? Bool ?? false

@@ -5,7 +5,7 @@
 //  Created by Марк Киричко on 16.11.2024.
 //
 
-import Foundation
+import Firebase
 
 final class CreateCookViewModel: ObservableObject {
     
@@ -16,13 +16,19 @@ final class CreateCookViewModel: ObservableObject {
     @Published var isChanged = false
     
     var alertText = ""
+    var password = ""
     
     // MARK: - сервисы
     private let service = APIService()
     private let settingsManager = SettingsManager()
+    private let firebaseManager = FirebaseManager()
+    
+    init() {
+        getPassword()
+    }
     
     func saveCook() {
-        if key == "123" {
+        if key == password {
             if fio.components(separatedBy: " ").count < 3 {
                 alertText = "Введите полное ФИО!"
                 DispatchQueue.main.async {
@@ -45,13 +51,31 @@ final class CreateCookViewModel: ObservableObject {
     }
     
     func addCook() {
-        let token = settingsManager.getToken()
         let correctNumber = String(phone.dropFirst())
-        let cook = Cook(firstName: fio.components(separatedBy: " ")[1], lastName: fio.components(separatedBy: " ")[0], fatherName: fio.components(separatedBy: " ")[2], fcmToken: token, phone: correctNumber)
-        service.createCook(cook: cook) { model in
-            self.saveData(cook: model)
+        if let fcmToken = Messaging.messaging().fcmToken {
+            print("TOKEEEN: \(fcmToken)")
+            let cook = Cook(firstName: fio.components(separatedBy: " ")[1], lastName: fio.components(separatedBy: " ")[0], fatherName: fio.components(separatedBy: " ")[2], fcmToken: fcmToken, phone: correctNumber)
+            let fcm = FcmModel(fcm: fcmToken)
+            service.createCook(cook: cook) { model in
+                UserDefaults.standard.set(fcmToken, forKey: "token")
+                self.service.updateToken(isCook: true, fcm: fcm, id: model.id) {
+                    self.service.editCookWorking(isWorking: 1) { _ in
+                        self.saveData(cook: model)
+                        UserDefaults.saveData(object: WorkingStatus.work, key: "isWorking") {
+                            DispatchQueue.main.async {
+                                self.isChanged.toggle()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    func getPassword() {
+        firebaseManager.getConfig(key: "add_cook_key") { password in
             DispatchQueue.main.async {
-                self.isChanged.toggle()
+                self.password = String(password as? Int ?? 0)
             }
         }
     }

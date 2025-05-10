@@ -9,6 +9,15 @@ import Foundation
 
 final class LocationService {
     
+    private let firebaseManager = FirebaseManager()
+    var token = ""
+    
+    init() {
+        firebaseManager.getConfigArray(key: "dadata_api_keys") { arr in
+            self.token = arr[0].token
+        }
+    }
+    
     func getSuggestions(text: String, completion: @escaping([Suggestion])->Void) {
         var request = URLRequest(url: URL(string: "http://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address")!)
         let json = """
@@ -23,7 +32,7 @@ final class LocationService {
                 }
             """.data(using: .utf8) ?? Data()
         request.httpMethod = "POST"
-        request.setValue("Token 5112d179c1866dabcbcbc00e804b4fdaf447b3d4", forHTTPHeaderField: "Authorization")
+        request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = json
         

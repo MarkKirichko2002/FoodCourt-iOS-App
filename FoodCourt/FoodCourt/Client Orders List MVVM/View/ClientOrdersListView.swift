@@ -52,6 +52,11 @@ struct ClientOrdersListView: View {
                                 Section(header: Text("\(section.name)").font(.system(size: 18))) {
                                     ForEach(section.orders) { order in
                                         ClientOrderCell(order: order, viewModel: viewModel)
+                                            .contentShape(Rectangle())
+                                            .onTapGesture {
+                                                viewModel.currentOrder = order
+                                                viewModel.isPresented.toggle()
+                                            }
                                     }.id(section.name)
                                 }
                             }
@@ -67,6 +72,9 @@ struct ClientOrdersListView: View {
                 }
             }.navigationTitle("Заказы")
                 .navigationBarTitleDisplayMode(.inline)
+                .fullScreenCover(isPresented: $viewModel.isPresented) {
+                    FullOrderView(order: viewModel.currentOrder)
+             }
         }
     }
 }
